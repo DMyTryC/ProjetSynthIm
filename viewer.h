@@ -24,6 +24,7 @@
 #include "camera.h"
 #include "meshLoader.h"
 #include "shader.h"
+#include "grid.h"
 
 class Viewer : public QGLWidget {
  public:
@@ -64,6 +65,13 @@ class Viewer : public QGLWidget {
 
   GLuint _vao;
   GLuint _buffers[3];
+
+  GLuint _vaoTerrain;
+  GLuint _vaoQuad;
+  GLuint _terrain[2];
+  GLuint _quad;
+
+  Grid _grid;
 };
 
 #endif // VIEWER_H

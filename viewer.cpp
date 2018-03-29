@@ -13,6 +13,8 @@ Viewer::Viewer(const QGLFormat &format)
     _drawMode(false),
     _var(0.0f),
     _speed(0.01f) {
+
+  _grid = Grid(1024,-1.0f,1.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
   _cam  = new Camera(_mesh->radius,glm::vec3(_mesh->center[0],_mesh->center[1],_mesh->center[2]));
@@ -32,10 +34,10 @@ Viewer::~Viewer() {
 }
 
 void Viewer::createShader() {
-  /*_shader = new Shader();
-  _vertexFilename   = "shaders/helloworld.vert";
-  _fragmentFilename = "shaders/helloworld.frag";
-  _shader->load(_vertexFilename.c_str(),_fragmentFilename.c_str());*/
+  _shader = new Shader();
+  _vertexFilename   = "shaders/normal.vert";
+  _fragmentFilename = "shaders/normal.frag";
+  _shader->load(_vertexFilename.c_str(),_fragmentFilename.c_str());
 
 }
 
@@ -62,11 +64,11 @@ void Viewer::createVAO() {
   // create the VBO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);
   glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // vertices
-  glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER,_grid.nbVertices()*3*sizeof(float),_grid.vertices(),GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // indices
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid.nbFaces()*3*sizeof(int),_grid.faces(),GL_STATIC_DRAW);
 
   // create the VBO associated with the screen quad
   glBindVertexArray(_vaoQuad);
@@ -97,10 +99,10 @@ void Viewer::deleteVAO() {
 
 void Viewer::loadMeshIntoVAO() {
   // activate VAO
-  /*glBindVertexArray(_vao);
+  glBindVertexArray(_vao);
   
   // store mesh positions into buffer 0 inside the GPU memory
-  glBindBuffer(GL_ARRAY_BUFFER,_buffers[0]);
+  /*glBindBuffer(GL_ARRAY_BUFFER,_buffers[0]);
   glBufferData(GL_ARRAY_BUFFER,_mesh->nb_vertices*3*sizeof(float),_mesh->vertices,GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
@@ -113,22 +115,22 @@ void Viewer::loadMeshIntoVAO() {
 
   // store mesh indices into buffer 2 inside the GPU memory
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_buffers[2]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_mesh->nb_faces*3*sizeof(unsigned int),_mesh->faces,GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_mesh->nb_faces*3*sizeof(unsigned int),_mesh->faces,GL_STATIC_DRAW);*/
 
   // deactivate the VAO for now
-  glBindVertexArray(0);*/
+  glBindVertexArray(0);
 }
 
 void Viewer::drawVAO() {
   // activate the VAO, draw the associated triangles and desactivate the VAO
-  /*glBindVertexArray(_vao);
-  glDrawElements(GL_TRIANGLES,3*_mesh->nb_faces,GL_UNSIGNED_INT,(void *)0);
-  glBindVertexArray(0);*/
+  glBindVertexArray(_vao);
+  //glDrawElements(GL_TRIANGLES,3*_mesh->nb_faces,GL_UNSIGNED_INT,(void *)0);
+  glBindVertexArray(0);
 }
 
 void Viewer::enableShader() {
   // get the current modelview and projection matrices 
-  /*glm::mat4 p  = _cam->projMatrix();
+  glm::mat4 p  = _cam->projMatrix();
   glm::mat4 mv  = _cam->mdvMatrix();
 
   // compute the resulting transformation matrix
@@ -141,7 +143,7 @@ void Viewer::enableShader() {
   glUniformMatrix4fv(glGetUniformLocation(_shader->id(),"mvp"),1,GL_FALSE,&(mvp[0][0]));
 
   // send another variable
-  glUniform3f(glGetUniformLocation(_shader->id(),"myColor"),0.0f,1.0f,0.0f);*/
+  glUniform3f(glGetUniformLocation(_shader->id(),"myColor"),0.0f,1.0f,0.0f);
 }
 
 void Viewer::disableShader() {
