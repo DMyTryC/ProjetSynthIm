@@ -43,25 +43,23 @@ class Viewer : public QGLWidget {
  private:
   void createVAO();
   void deleteVAO();
-  void loadMeshIntoVAO();
   void drawVAO();
 
-  void createShader();
-  void deleteShader();
-  void enableShader();
-  void disableShader();
+  void createShaders();
+  void deleteShaders();
+  void enableShaders(unsigned int shader);
+  void disableShaders();
 
   QTimer        *_timer;    // timer that controls the animation
   bool           _drawMode; // press w for wire or fill drawing mode
-  float          _var;      // animated variable (going into [0-1-0-1...1-0])
-  float          _speed;    // speed added to the spin at each frame
+  unsigned int   _currentshader; // current shader index
 
-  Mesh   *_mesh;   // the mesh
   Camera *_cam;    // the camera
-  Shader *_shader; // the shader
+  Grid *_grid; // the grid
 
-  std::string _vertexFilename;
-  std::string _fragmentFilename;
+  std::vector<std::string> _vertexFilenames;   // all vertex filenames
+  std::vector<std::string> _fragmentFilenames; // all fragment filenames
+  std::vector<Shader *>    _shaders;           // all the shaders
 
   GLuint _vao;
   GLuint _buffers[3];
@@ -71,7 +69,7 @@ class Viewer : public QGLWidget {
   GLuint _terrain[2];
   GLuint _quad;
 
-  Grid _grid;
+
 };
 
 #endif // VIEWER_H

@@ -10,14 +10,12 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
-    _drawMode(false),
-    _var(0.0f),
-    _speed(0.01f) {
+    _drawMode(false) {
 
-  _grid = Grid(1024,-1.0f,1.0f);
+  _grid = new Grid(4,0.0f,1.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera(_mesh->radius,glm::vec3(_mesh->center[0],_mesh->center[1],_mesh->center[2]));
+  _cam  = new Camera(1,glm::vec3(0.0f,0.0f,0.0f));
 
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
@@ -26,23 +24,26 @@ Viewer::Viewer(const QGLFormat &format)
 Viewer::~Viewer() {
   // delete everything 
   delete _timer;
-  delete _mesh;
   delete _cam;
 
   deleteVAO();
-  deleteShader();
+  deleteShaders();
 }
 
-void Viewer::createShader() {
-  _shader = new Shader();
-  _vertexFilename   = "shaders/normal.vert";
-  _fragmentFilename = "shaders/normal.frag";
-  _shader->load(_vertexFilename.c_str(),_fragmentFilename.c_str());
+void Viewer::createShaders() {
 
+  _vertexFilenames.push_back("shaders/noise.vert");
+  _fragmentFilenames.push_back("shaders/noise.frag");
+
+
+  _vertexFilenames.push_back("shaders/normal.vert");
+  _fragmentFilenames.push_back("shaders/normal.frag");
 }
 
-void Viewer::deleteShader() {
-  delete _shader;
+void Viewer::deleteShaders() {
+    for (unsigned int i = 0; i < _shaders.size(); i++){
+        delete _shaders[i];
+    }
 }
 
 void Viewer::createVAO() {
@@ -54,7 +55,8 @@ void Viewer::createVAO() {
   //GLuint _quad;
 
   const GLfloat quadData[] = {
-    -1.0f,-1.0f,0.0f, 1.0f,-1.0f,0.0f, -1.0f,1.0f,0.0f, -1.0f,1.0f,0.0f, 1.0f,-1.0f,0.0f, 1.0f,1.0f,0.0f };
+    -1.0f,-1.0f,0.0f, 1.0f,-1.0f,0.0f, -1.0f,1.0f,0.0f, -1.0f,1.0f,0.0f, 1.0f,-1.0f,0.0f, 1.0f,1.0f,0.0f
+  };
 
   glGenBuffers(2,_terrain);
   glGenBuffers(1,&_quad);
@@ -64,11 +66,11 @@ void Viewer::createVAO() {
   // create the VBO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);
   glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // vertices
-  glBufferData(GL_ARRAY_BUFFER,_grid.nbVertices()*3*sizeof(float),_grid.vertices(),GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // indices
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid.nbFaces()*3*sizeof(int),_grid.faces(),GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);
 
   // create the VBO associated with the screen quad
   glBindVertexArray(_vaoQuad);
@@ -76,6 +78,7 @@ void Viewer::createVAO() {
   glBufferData(GL_ARRAY_BUFFER, sizeof(quadData),quadData,GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
+
 }
 
 void Viewer::deleteVAO() {
@@ -88,21 +91,23 @@ void Viewer::deleteVAO() {
 /*void Viewer::createVAO() {
   // create some buffers inside the GPU memory
   glGenVertexArrays(1,&_vao);
-  glGenBuffers(3,_buffers);
+  glGenBuffers(1,_buffers);
+
+
 }
 
 void Viewer::deleteVAO() {
   // delete / free all GPU buffers
-  glDeleteBuffers(3,_buffers);
   glDeleteVertexArrays(1,&_vao);
+  glDeleteBuffers(1,_buffers);
 }*/
 
-void Viewer::loadMeshIntoVAO() {
+/*void Viewer::loadMeshIntoVAO() {
   // activate VAO
   glBindVertexArray(_vao);
   
   // store mesh positions into buffer 0 inside the GPU memory
-  /*glBindBuffer(GL_ARRAY_BUFFER,_buffers[0]);
+  glBindBuffer(GL_ARRAY_BUFFER,_buffers[0]);
   glBufferData(GL_ARRAY_BUFFER,_mesh->nb_vertices*3*sizeof(float),_mesh->vertices,GL_STATIC_DRAW);
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
   glEnableVertexAttribArray(0);
@@ -115,11 +120,11 @@ void Viewer::loadMeshIntoVAO() {
 
   // store mesh indices into buffer 2 inside the GPU memory
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_buffers[2]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_mesh->nb_faces*3*sizeof(unsigned int),_mesh->faces,GL_STATIC_DRAW);*/
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_mesh->nb_faces*3*sizeof(unsigned int),_mesh->faces,GL_STATIC_DRAW);
 
   // deactivate the VAO for now
   glBindVertexArray(0);
-}
+}*/
 
 void Viewer::drawVAO() {
   // activate the VAO, draw the associated triangles and desactivate the VAO
@@ -128,27 +133,24 @@ void Viewer::drawVAO() {
   glBindVertexArray(0);
 }
 
-void Viewer::enableShader() {
-  // get the current modelview and projection matrices 
-  glm::mat4 p  = _cam->projMatrix();
-  glm::mat4 mv  = _cam->mdvMatrix();
+void Viewer::enableShaders(unsigned int shader) {
 
-  // compute the resulting transformation matrix
-  glm::mat4 mvp = p*mv;
+  // current shader ID
+  GLuint id = _shaders[shader]->id();
 
-  // activate the shader 
-  glUseProgram(_shader->id());
+  // activate the current shader
+  glUseProgram(id);
 
-  // send the transformation matrix
-  glUniformMatrix4fv(glGetUniformLocation(_shader->id(),"mvp"),1,GL_FALSE,&(mvp[0][0]));
+  // send the model-view matrix
+  glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
 
-  // send another variable
-  glUniform3f(glGetUniformLocation(_shader->id(),"myColor"),0.0f,1.0f,0.0f);
+  // send the projection matrix
+  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
 }
 
-void Viewer::disableShader() {
+void Viewer::disableShaders() {
   // desactivate all shaders 
-  //glUseProgram(0);
+  glUseProgram(0);
 }
 
 void Viewer::paintGL() {
@@ -156,23 +158,24 @@ void Viewer::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // set viewport
-  /*glViewport(0,0,width(),height());
+  glViewport(0,0,width(),height());
 
   // tell the GPU to use this specified shader and send custom variables (matrices and others)
-  enableShader();
+  enableShaders(_currentshader);
   
   // actually draw the scene 
   drawVAO();
 
   // tell the GPU to stop using this shader 
-  disableShader();
+  disableShaders();
 
   // animate variables
-  _var += _speed;*/
+  //_var += _speed;
 }
 
 void Viewer::resizeGL(int width,int height) {
   _cam->initialize(width,height,false);
+  glViewport(0,0,width,height);
   updateGL();
 }
 
@@ -200,22 +203,12 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 }
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
-  
-  // key w: wire/filled
-  if(ke->key()==Qt::Key_W) {
-    if(!_drawMode) 
-      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    else 
-      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-    
-    _drawMode = !_drawMode;
-  } 
 
   // key a: play/stop animation
   if(ke->key()==Qt::Key_A) {
-    if(_timer->isActive()) 
+    if(_timer->isActive())
       _timer->stop();
-    else 
+    else
       _timer->start();
   }
 
@@ -223,10 +216,31 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   if(ke->key()==Qt::Key_I) {
     _cam->initialize(width(),height(),true);
   }
-  
-  // key r: reload shaders 
+
+  // key f: compute FPS
+  if(ke->key()==Qt::Key_F) {
+    int elapsed;
+    QTime timer;
+    timer.start();
+    unsigned int nb = 500;
+    for(unsigned int i=0;i<nb;++i) {
+      paintGL();
+    }
+    elapsed = timer.elapsed();
+    double t = (double)nb/((double)elapsed);
+    cout << "FPS : " << t*1000.0 << endl;
+  }
+
+  // key r: reload shaders
   if(ke->key()==Qt::Key_R) {
-    _shader->reload(_vertexFilename.c_str(),_fragmentFilename.c_str());
+    for(unsigned int i=0;i<_vertexFilenames.size();++i) {
+      _shaders[i]->reload(_vertexFilenames[i].c_str(),_fragmentFilenames[i].c_str());
+    }
+  }
+
+  // space: next shader
+  if(ke->key()==Qt::Key_Space) {
+    _currentshader = (_currentshader+1)%_shaders.size();
   }
 
   updateGL();
@@ -247,14 +261,20 @@ void Viewer::initializeGL() {
   glClearColor(0.0,0.0,0.0,1.0);
   glEnable(GL_DEPTH_TEST);
   glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+  glViewport(0,0,width(),height());
 
   // initialize camera
   _cam->initialize(width(),height(),true);
 
   // create and initialize shaders and VAO 
-  createShader();
+  createShaders();
+
+  for(unsigned int i=0;i<_vertexFilenames.size();++i) {
+    _shaders.push_back(new Shader());
+    _shaders[i]->load(_vertexFilenames[i].c_str(),_fragmentFilenames[i].c_str());
+  }
+
   createVAO();
-  loadMeshIntoVAO();
 
   // starts the timer 
   _timer->start();
