@@ -1,5 +1,7 @@
 #version 330
 
+// The noise generation
+
 in vec2 pos;
 
 out vec4 outBuffer;

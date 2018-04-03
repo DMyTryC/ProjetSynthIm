@@ -1,7 +1,7 @@
 #ifndef VIEWER_H
 #define VIEWER_H
 
-// GLEW lib: needs to be included first!!
+// GLEW lib: needs to be included first!
 #include <GL/glew.h>
 
 // OpenGL library 
@@ -22,7 +22,6 @@
 #include <stack>
 
 #include "camera.h"
-#include "meshLoader.h"
 #include "shader.h"
 #include "grid.h"
 
@@ -45,6 +44,10 @@ class Viewer : public QGLWidget {
   void deleteVAO();
   void drawVAO();
 
+  void createFBO();
+  void initFBO();
+  void deleteFBO();
+
   void createShaders();
   void deleteShaders();
   void enableShaders(unsigned int shader);
@@ -54,19 +57,22 @@ class Viewer : public QGLWidget {
   bool           _drawMode; // press w for wire or fill drawing mode
   unsigned int   _currentshader; // current shader index
 
-  Camera *_cam;    // the camera
-  Grid *_grid; // the grid
+  Camera *_cam; // the camera
+  Grid *_grid;  // the grid
 
   std::vector<std::string> _vertexFilenames;   // all vertex filenames
   std::vector<std::string> _fragmentFilenames; // all fragment filenames
-  std::vector<Shader *>    _shaders;           // all the shaders
+
+  std::vector<Shader *> _shaders; // all the shaders
 
   GLuint _vaoTerrain;
   GLuint _vaoQuad;
   GLuint _terrain[2];
   GLuint _quad;
 
-
+  GLuint _fbo;
+  GLuint _heightMap;
+  GLuint _normalMap;
 };
 
 #endif // VIEWER_H

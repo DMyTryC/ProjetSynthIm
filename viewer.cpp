@@ -2,7 +2,6 @@
 
 #include <math.h>
 #include <iostream>
-#include "meshLoader.h"
 #include <QTime>
 
 using namespace std;
@@ -28,16 +27,24 @@ Viewer::~Viewer() {
 
   deleteVAO();
   deleteShaders();
+  deleteFBO();
 }
 
 void Viewer::createShaders() {
+  _vertexFilenames.push_back("shaders/first.vert");
+  _fragmentFilenames.push_back("shaders/first.frag");
 
-  _vertexFilenames.push_back("shaders/noise.vert");
-  _fragmentFilenames.push_back("shaders/noise.frag");
+  _vertexFilenames.push_back("shaders/second.vert");
+  _fragmentFilenames.push_back("shaders/second.frag");
 
+  _vertexFilenames.push_back("shaders/third.vert");
+  _fragmentFilenames.push_back("shaders/third.frag");
 
-  _vertexFilenames.push_back("shaders/normal.vert");
-  _fragmentFilenames.push_back("shaders/normal.frag");
+  _vertexFilenames.push_back("shaders/fourth.vert");
+  _fragmentFilenames.push_back("shaders/fourth.frag");
+
+  _vertexFilenames.push_back("shaders/fifth.vert");
+  _fragmentFilenames.push_back("shaders/fifth.frag");
 }
 
 void Viewer::deleteShaders() {
@@ -63,7 +70,7 @@ void Viewer::createVAO() {
   glGenVertexArrays(1,&_vaoTerrain);
   glGenVertexArrays(1,&_vaoQuad);
 
-  // create the VAO associated with the grid (the terrain)
+  // create the VBO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);
   glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // vertices
   glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);
@@ -72,7 +79,7 @@ void Viewer::createVAO() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // indices
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);
 
-  // create the VAO associated with the screen quad
+  // create the VBO associated with the screen quad
   glBindVertexArray(_vaoQuad);
   glBindBuffer(GL_ARRAY_BUFFER,_quad); // vertices
   glBufferData(GL_ARRAY_BUFFER, sizeof(quadData),quadData,GL_STATIC_DRAW);
@@ -86,7 +93,42 @@ void Viewer::deleteVAO() {
   glDeleteBuffers(1,&_quad);
   glDeleteVertexArrays(1,&_vaoTerrain);
   glDeleteVertexArrays(1,&_vaoQuad);
+}\
+\
+void Viewer::createFBO(){
+    glGenFramebuffers(1, &_fbo);
+    glGenTextures(1, &_heightMap);
+    glGenTextures(1,&_normalMap);
 }
+
+void Viewer::initFBO() {
+
+
+ glBindTexture(GL_TEXTURE2D,_normalMap);
+ glTex
+
+  // create the texture for rendering depth values
+  glBindTexture(GL_TEXTURE_2D,_heightMap);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width(),height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
+  // attach textures to framebuffer object
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
+  glBindTexture(GL_TEXTURE_2D,_heightMap);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_heightMap,0);
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
+}
+
+void Viewer::deleteFBO() {
+  // delete all FBO Ids
+  glDeleteFramebuffers(1,&_fbo);
+  glDeleteTextures(1,&_depthMap);
+}
+
 
 /*void Viewer::createVAO() {
   // create some buffers inside the GPU memory
@@ -276,6 +318,9 @@ void Viewer::initializeGL() {
   }
 
   createVAO();
+
+  createFBO();
+  initFBO();
 
   // starts the timer 
   _timer->start();
