@@ -12,7 +12,7 @@ Viewer::Viewer(const QGLFormat &format)
     _timer(new QTimer(this)),
     _drawMode(false) {
 
-  _grid = new Grid(1024,0.0f,1.0f);
+  _grid = new Grid(10,-5.0f,5.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
   _cam  = new Camera(1,glm::vec3(0.0f,0.0f,0.0f));
@@ -63,7 +63,7 @@ void Viewer::createVAO() {
   glGenVertexArrays(1,&_vaoTerrain);
   glGenVertexArrays(1,&_vaoQuad);
 
-  // create the VBO associated with the grid (the terrain)
+  // create the VAO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);
   glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // vertices
   glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);
@@ -72,7 +72,7 @@ void Viewer::createVAO() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // indices
   glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);
 
-  // create the VBO associated with the screen quad
+  // create the VAO associated with the screen quad
   glBindVertexArray(_vaoQuad);
   glBindBuffer(GL_ARRAY_BUFFER,_quad); // vertices
   glBufferData(GL_ARRAY_BUFFER, sizeof(quadData),quadData,GL_STATIC_DRAW);
@@ -128,8 +128,11 @@ void Viewer::deleteVAO() {
 
 void Viewer::drawVAO() {
   // activate the VAO, draw the associated triangles and desactivate the VAO
-  glBindVertexArray(_vao);
-  //glDrawElements(GL_TRIANGLES,3*_mesh->nb_faces,GL_UNSIGNED_INT,(void *)0);
+  glBindVertexArray(_vaoTerrain);
+  glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
+  glBindVertexArray(0);
+  glBindVertexArray(_vaoQuad);
+  //glDrawArrays(GL_TRIANGLES, 3*_grid->nbFaces(),10);
   glBindVertexArray(0);
 }
 
@@ -141,11 +144,12 @@ void Viewer::enableShaders(unsigned int shader) {
   // activate the current shader
   glUseProgram(id);
 
-  // send the model-view matrix
+
+  /*// send the model-view matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
 
   // send the projection matrix
-  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
+  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));*/
 }
 
 void Viewer::disableShaders() {
@@ -168,9 +172,6 @@ void Viewer::paintGL() {
 
   // tell the GPU to stop using this shader 
   disableShaders();
-
-  // animate variables
-  //_var += _speed;
 }
 
 void Viewer::resizeGL(int width,int height) {

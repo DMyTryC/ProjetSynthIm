@@ -2,7 +2,7 @@
 #define VIEWER_H
 
 // GLEW lib: needs to be included first!!
-#include <GL/glew.h> 
+#include <GL/glew.h>
 
 // OpenGL library 
 #include <GL/gl.h>
@@ -60,9 +60,6 @@ class Viewer : public QGLWidget {
   std::vector<std::string> _vertexFilenames;   // all vertex filenames
   std::vector<std::string> _fragmentFilenames; // all fragment filenames
   std::vector<Shader *>    _shaders;           // all the shaders
-
-  GLuint _vao;
-  GLuint _buffers[3];
 
   GLuint _vaoTerrain;
   GLuint _vaoQuad;
