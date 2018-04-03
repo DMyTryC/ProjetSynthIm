@@ -4,7 +4,7 @@
 
 out vec4 outBuffer;
 uniform sampler2D heightMap;
-uniform sampler2D normalMap
+uniform sampler2D normalMap;
 
 in vec2 texcoord;
 
@@ -18,7 +18,6 @@ return c.x;// the height is stored in all channels (take the first one)
 
 
 void main() {
-
   vec2 ps = 1./vec2(textureSize(heightMap,0));
 
   vec2 g = vec2(value(texture(heightMap, texcoord+vec2(ps.x, 0.)))-
