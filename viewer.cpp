@@ -12,7 +12,7 @@ Viewer::Viewer(const QGLFormat &format)
     _timer(new QTimer(this)),
     _drawMode(false) {
 
-  _grid = new Grid(4,0.0f,1.0f);
+  _grid = new Grid(1024,0.0f,1.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
   _cam  = new Camera(1,glm::vec3(0.0f,0.0f,0.0f));
