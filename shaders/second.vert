@@ -1,5 +1,7 @@
 #version 330
 
+// The normal map shader
+
 layout(location = 0) in vec3 position;
 
 out vec2 texcoord;

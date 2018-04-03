@@ -1,5 +1,7 @@
 #version 330
 
+// The noise generation
+
 // input attributes
 layout(location = 0) in vec3 position;
 

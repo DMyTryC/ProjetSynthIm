@@ -1,5 +1,7 @@
 #version 330
 
+// The normal map shader
+
 out vec4 outBuffer;
 uniform sampler2D heightmap;
 
