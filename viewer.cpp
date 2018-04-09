@@ -99,16 +99,15 @@ void Viewer::createFBO(){
     glGenFramebuffers(1, &_fbo);
     glGenTextures(1, &_heightMap);
     glGenTextures(1,&_normalMap);
+
+
 }
 
 void Viewer::initFBO() {
 
-
- glBindTexture(GL_TEXTURE2D,_normalMap);
- glTex
-
   // create the texture for rendering depth values
   glBindTexture(GL_TEXTURE_2D,_heightMap);
+  glBindTexture(GL_TEXTURE_2D,_normalMap);
   glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width(),height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -119,14 +118,19 @@ void Viewer::initFBO() {
   // attach textures to framebuffer object
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
   glBindTexture(GL_TEXTURE_2D,_heightMap);
+  glBindTexture(GL_TEXTURE_2D,_normalMap);
+  
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_heightMap,0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_normalMap,0);
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
 void Viewer::deleteFBO() {
   // delete all FBO Ids
   glDeleteFramebuffers(1,&_fbo);
-  glDeleteTextures(1,&_depthMap);
+  glDeleteTextures(1,&_heightMap);
+  glDeleteTextures(1,&_normalMap);
+  
 }
 
 
