@@ -108,6 +108,10 @@ void Viewer::deleteVAO() {
 void Viewer::createFBO(){
     glGenFramebuffers(1, &_fbo);
     glGenTextures(1, &_heightMap);
+<<<<<<< HEAD
+    glGenTextures(1,&_normalMap);
+
+=======
     glGenTextures(1, &_normalMap);
 }
 
@@ -119,11 +123,22 @@ void Viewer::initFBO() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+>>>>>>> origin/master
 
+}
 
+<<<<<<< HEAD
+void Viewer::initFBO() {
+
+  // create the texture for rendering depth values
+  glBindTexture(GL_TEXTURE_2D,_heightMap);
+  glBindTexture(GL_TEXTURE_2D,_normalMap);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width(),height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+=======
   // create the texture for rendering the height map values
   glBindTexture(GL_TEXTURE_2D, _heightMap);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width(), height(), 0, GL_RGBA, GL_FLOAT, NULL);
+>>>>>>> origin/master
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -135,15 +150,30 @@ void Viewer::initFBO() {
   glBindTexture(GL_TEXTURE_2D, _normalMap);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _normalMap, 0);
   glBindTexture(GL_TEXTURE_2D,_heightMap);
+<<<<<<< HEAD
+  glBindTexture(GL_TEXTURE_2D,_normalMap);
+  
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_heightMap,0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_normalMap,0);
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
+=======
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _heightMap, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+>>>>>>> origin/master
 }
 
 void Viewer::deleteFBO() {
   // delete all FBO Ids
+<<<<<<< HEAD
+  glDeleteFramebuffers(1,&_fbo);
+  glDeleteTextures(1,&_heightMap);
+  glDeleteTextures(1,&_normalMap);
+  
+=======
   glDeleteFramebuffers(1, &_fbo);
   glDeleteTextures(1, &_normalMap);
   glDeleteTextures(1, &_heightMap);
+>>>>>>> origin/master
 }
 
 void Viewer::drawVAO() {
