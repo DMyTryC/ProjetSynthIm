@@ -3,11 +3,11 @@
 // The normal map shader
 
 
-
 out vec4 outBuffer;
 
 uniform sampler2D heightMap;
-uniform sampler2D normalMap;
+
+//layout(location = 0) in vec4 normal;
 
 in vec2 texcoord;
 
@@ -16,7 +16,6 @@ float value(in vec4 c) {
 	// gradient of what:
 
 	return c.x;// the height is stored in all channels (take the first one)
-
 }
 
 
@@ -37,4 +36,5 @@ void main() {
 	vec3 n = normalize(cross(n1, n2));
 
 	outBuffer = vec4(n, value(texture(heightMap, texcoord)));
+	//normal = outBuffer;
 }

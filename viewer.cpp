@@ -14,10 +14,12 @@ Viewer::Viewer(const QGLFormat &format)
   _grid = new Grid(10, -5.0f, 5.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera(1,glm::vec3(0.0f, 0.0f, 0.0f));
+  _cam  = new Camera(0.5,glm::vec3(0.0f, 0.0f, 0.0f));
 
   _timer->setInterval(10);
   connect(_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
+
+  _currentshader = 1;
 }
 
 Viewer::~Viewer() {
@@ -62,19 +64,9 @@ void Viewer::createVAO() {
   //GLuint _terrain[2];
   //GLuint _quad;
 
-  const GLfloat quadData[] = {
-    -1.0f,-1.0f,0.0f,
-     1.0f,-1.0f,0.0f,
-    -1.0f,1.0f,0.0f,
-    -1.0f,1.0f,0.0f,
-     1.0f,-1.0f,0.0f,
-     1.0f,1.0f,0.0f
-  };
 
   glGenBuffers(2, _terrain);
-  glGenBuffers(1, &_quad);
   glGenVertexArrays(1, &_vaoTerrain);
-  glGenVertexArrays(1, &_vaoQuad);
 
   // create the VBO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);
@@ -87,15 +79,30 @@ void Viewer::createVAO() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _terrain[1]); // faces
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, _grid->nbFaces()*3*sizeof(unsigned int), _grid->faces(), GL_STATIC_DRAW);
 
-  // create the VBO associated with the screen quad
+  // create the VAO associated with the screen quad
+  // 2 triangles that cover the viewPort
+  const GLfloat quadData[] = {
+    -1.0f,-1.0f,0.0f,
+     1.0f,-1.0f,0.0f,
+    -1.0f,1.0f,0.0f,
+    -1.0f,1.0f,0.0f,
+     1.0f,-1.0f,0.0f,
+     1.0f,1.0f,0.0f
+  };
+
+  // create VAO
+  glGenBuffers(1, &_quad);
+  glGenVertexArrays(1, &_vaoQuad);
+
+  // bind vao and send vertices
   glBindVertexArray(_vaoQuad);
   glBindBuffer(GL_ARRAY_BUFFER, _quad); // vertices
   glBufferData(GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_STATIC_DRAW);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
   glEnableVertexAttribArray(0);
 
+  // back to normal
   glBindVertexArray(0);
-
 }
 
 void Viewer::deleteVAO() {
@@ -194,61 +201,52 @@ void Viewer::disableShaders() {
 void Viewer::paintGL() {
   
   switch (_currentshader) {
-    case 0 :
-      {
-        // clear the color and depth buffers
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // set viewport
-        glViewport(0, 0, width(), height());
-
-        enableShaders(_currentshader);
-
-        drawVAO();
-        break;
-      }
     case 1 :
       {
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-
-        enableShaders(_currentshader);
-
-        GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-
-        glDrawBuffers(2, buffers);
-
         // clear the color and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // set viewport
-        glViewport(0, 0, width(), height());
-
-        enableShaders(_currentshader);
+        enableShaders(0);
 
         drawVAO();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        enableShaders(_currentshader);
-
-        drawQuad();
         break;
       }
     case 2 :
       {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+
+        GLuint buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffers(2, buffers);
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // clear the normal and depth buffers
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        enableShaders(1);
+
+        drawQuad();
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
         break;
       }
     case 3 :
       {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
         break;
       }
     case 4 :
       {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
+        break;
+      }
+    case 5 :
+      {
+        glClear(GL_COLOR_BUFFER_BIT);
         break;
       }
   }
@@ -260,8 +258,6 @@ void Viewer::paintGL() {
 void Viewer::resizeGL(int width, int height) {
   _cam->initialize(width, height, false);
   glViewport(0,0, width, height);
-
-
   initFBO();
   updateGL();
 }
@@ -347,6 +343,7 @@ void Viewer::initializeGL() {
   // init OpenGL settings
   glClearColor(0.0,0.0,0.0,1.0);
   glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glViewport(0,0,width(), height());
 
