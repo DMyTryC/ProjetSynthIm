@@ -2,17 +2,16 @@
 
 // The normal map shader
 
-layout(location = 0) in vec3 position;
+layout(location = 0) in vec3 vertex;
 
 out vec2 texcoord;
 
-in vec2 vertex;
-
+uniform mat4 mdvMat;
+uniform mat4 projMat;
 
 void main() {
 
-gl_Position = vec4(vertex,0,1);
+	gl_Position = projMat*mdvMat*vec4(vertex, 1);
 
-texcoord = position.xy*0.5+0.5;
-
+	texcoord = vertex.xy*0.5+0.5;
 }

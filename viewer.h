@@ -48,6 +48,7 @@ class Viewer : public QGLWidget {
   void initFBO();
   void deleteFBO();
   void drawQuad();
+  void drawGrid(unsigned int shader);
 
   void createShaders();
   void deleteShaders();
@@ -70,6 +71,7 @@ class Viewer : public QGLWidget {
   GLuint _vaoQuad;
   GLuint _terrain[2];
   GLuint _quad;
+  GLuint _GRID_SIZE;
 
   GLuint _fbo;
   GLuint _heightMap;
