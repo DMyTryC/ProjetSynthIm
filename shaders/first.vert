@@ -14,9 +14,6 @@ uniform mat4 projMat;
 void main() {
   // no need for any particular transformation (Identity matrices)
   pos = position.xy*0.5+0.5;
-<<<<<<< HEAD
   gl_Position = projMat*mdvMat*vec4(position,1);
-=======
-  gl_Position = vec4(position, 1);
->>>>>>> 9a3d4fbffc7dce5e8d4d4704ffdfe1e12ae035c1
+
 }
