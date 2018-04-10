@@ -15,10 +15,12 @@ Viewer::Viewer(const QGLFormat &format)
   _grid = new Grid(_GRID_SIZE, -1.0f, 1.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera(1,glm::vec3(0.0f, 0.0f, 0.0f));
+  _cam  = new Camera(0.5,glm::vec3(0.0f, 0.0f, 0.0f));
 
   _timer->setInterval(10);
   connect(_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
+
+  _currentshader = 1;
 }
 
 Viewer::~Viewer() {
@@ -120,6 +122,7 @@ void Viewer::createFBO(){
 void Viewer::initFBO() {
   // create the texture for rendering the normal map values
   glBindTexture(GL_TEXTURE_2D, _normalMap);
+
   glGenerateMipmap(GL_TEXTURE_2D);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _GRID_SIZE, _GRID_SIZE, 0, GL_RGBA, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -193,7 +196,6 @@ void Viewer::drawGrid(unsigned int shader){
 }
 
 void Viewer::drawQuad(){
-
     GLuint id = _shaders[1]->id();
 
     glActiveTexture(GL_TEXTURE0+0);
@@ -245,7 +247,7 @@ void Viewer::paintGL() {
         // clear the color and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        enableShaders(_currentshader);
+        enableShaders(0);
 
         drawVAO();
         break;
