@@ -11,13 +11,16 @@ Viewer::Viewer(const QGLFormat &format)
     _timer(new QTimer(this)),
     _drawMode(false) {
 
-  _grid = new Grid(10, -5.0f, 5.0f);
+  _GRID_SIZE = 1024;
+  _grid = new Grid(_GRID_SIZE, -1.0f, 1.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera(1,glm::vec3(0.0f, 0.0f, 0.0f));
+  _cam  = new Camera(0.5,glm::vec3(0.0f, 0.0f, 0.0f));
 
   _timer->setInterval(10);
   connect(_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
+
+  _currentshader = 1;
 }
 
 Viewer::~Viewer() {
@@ -31,25 +34,27 @@ Viewer::~Viewer() {
 }
 
 void Viewer::createShaders() {
+
   _vertexFilenames.push_back("shaders/first.vert");
   _fragmentFilenames.push_back("shaders/first.frag");
 
   _vertexFilenames.push_back("shaders/second.vert");
   _fragmentFilenames.push_back("shaders/second.frag");
 
-  _vertexFilenames.push_back("shaders/third.vert");
+  /*_vertexFilenames.push_back("shaders/third.vert");
   _fragmentFilenames.push_back("shaders/third.frag");
 
   _vertexFilenames.push_back("shaders/fourth.vert");
   _fragmentFilenames.push_back("shaders/fourth.frag");
 
   _vertexFilenames.push_back("shaders/fifth.vert");
-  _fragmentFilenames.push_back("shaders/fifth.frag");
+  _fragmentFilenames.push_back("shaders/fifth.frag");*/
 }
 
 void Viewer::deleteShaders() {
     for (unsigned int i = 0; i < _shaders.size(); i++){
         delete _shaders[i];
+        _shaders[i] = NULL;
     }
 }
 
@@ -62,6 +67,14 @@ void Viewer::createVAO() {
   //GLuint _terrain[2];
   //GLuint _quad;
 
+  glGenBuffers(2, _terrain);
+  glGenVertexArrays(1, &_vaoTerrain);
+  // create VAO
+  glGenBuffers(1, &_quad);
+  glGenVertexArrays(1, &_vaoQuad);
+
+  // create the VAO associated with the screen quad
+  // 2 triangles that cover the viewPort
   const GLfloat quadData[] = {
     -1.0f,-1.0f,0.0f,
      1.0f,-1.0f,0.0f,
@@ -70,11 +83,6 @@ void Viewer::createVAO() {
      1.0f,-1.0f,0.0f,
      1.0f,1.0f,0.0f
   };
-
-  glGenBuffers(2, _terrain);
-  glGenBuffers(1, &_quad);
-  glGenVertexArrays(1, &_vaoTerrain);
-  glGenVertexArrays(1, &_vaoQuad);
 
   // create the VBO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);
@@ -87,15 +95,15 @@ void Viewer::createVAO() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _terrain[1]); // faces
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, _grid->nbFaces()*3*sizeof(unsigned int), _grid->faces(), GL_STATIC_DRAW);
 
-  // create the VBO associated with the screen quad
+  // bind vao and send vertices
   glBindVertexArray(_vaoQuad);
   glBindBuffer(GL_ARRAY_BUFFER, _quad); // vertices
   glBufferData(GL_ARRAY_BUFFER, sizeof(quadData), quadData, GL_STATIC_DRAW);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
   glEnableVertexAttribArray(0);
 
+  // back to normal
   glBindVertexArray(0);
-
 }
 
 void Viewer::deleteVAO() {
@@ -108,92 +116,92 @@ void Viewer::deleteVAO() {
 void Viewer::createFBO(){
     glGenFramebuffers(1, &_fbo);
     glGenTextures(1, &_heightMap);
-<<<<<<< HEAD
-    glGenTextures(1,&_normalMap);
-
-=======
     glGenTextures(1, &_normalMap);
 }
 
 void Viewer::initFBO() {
   // create the texture for rendering the normal map values
   glBindTexture(GL_TEXTURE_2D, _normalMap);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width(), height(), 0, GL_RGBA, GL_FLOAT, NULL);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _GRID_SIZE, _GRID_SIZE, 0, GL_RGBA, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
->>>>>>> origin/master
 
-}
-
-<<<<<<< HEAD
-void Viewer::initFBO() {
-
-  // create the texture for rendering depth values
-  glBindTexture(GL_TEXTURE_2D,_heightMap);
-  glBindTexture(GL_TEXTURE_2D,_normalMap);
-  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,width(),height(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
-=======
-  // create the texture for rendering the height map values
   glBindTexture(GL_TEXTURE_2D, _heightMap);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width(), height(), 0, GL_RGBA, GL_FLOAT, NULL);
->>>>>>> origin/master
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _GRID_SIZE, _GRID_SIZE, 0, GL_RGBA, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
 
   // attach textures to framebuffer object
   glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
   glBindTexture(GL_TEXTURE_2D, _normalMap);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _normalMap, 0);
-  glBindTexture(GL_TEXTURE_2D,_heightMap);
-<<<<<<< HEAD
-  glBindTexture(GL_TEXTURE_2D,_normalMap);
-  
-  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_heightMap,0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_normalMap,0);
-  glBindFramebuffer(GL_FRAMEBUFFER,0);
-=======
+  glBindTexture(GL_TEXTURE_2D, _heightMap);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _heightMap, 0);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+      cout << "Erreur a l'initialisation du framebuffer" << endl;
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
->>>>>>> origin/master
 }
 
 void Viewer::deleteFBO() {
   // delete all FBO Ids
-<<<<<<< HEAD
-  glDeleteFramebuffers(1,&_fbo);
-  glDeleteTextures(1,&_heightMap);
-  glDeleteTextures(1,&_normalMap);
-  
-=======
   glDeleteFramebuffers(1, &_fbo);
   glDeleteTextures(1, &_normalMap);
   glDeleteTextures(1, &_heightMap);
->>>>>>> origin/master
 }
 
 void Viewer::drawVAO() {
+
+  GLuint id = _shaders[0]->id();
+
+  glActiveTexture(GL_TEXTURE0+0);
+  glBindTexture(GL_TEXTURE_2D, _normalMap);
+  glUniform1i(glGetUniformLocation(id, "normalmap"), 0);
+
+  glActiveTexture(GL_TEXTURE0+1);
+  glBindTexture(GL_TEXTURE_2D, _heightMap);
+  glUniform1i(glGetUniformLocation(id, "heightmap"), 1);
+
   // activate the VAO, draw the associated triangles and desactivate the VAO
   glBindVertexArray(_vaoTerrain);
-  glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, (void *)0);
+  glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }
 
+void Viewer::drawGrid(unsigned int shader){
+
+    GLuint id = _shaders[shader]->id();
+
+    glActiveTexture(GL_TEXTURE0+0);
+    glBindTexture(GL_TEXTURE_2D, _normalMap);
+    glUniform1i(glGetUniformLocation(id, "normalmap"), 0);
+
+    glActiveTexture(GL_TEXTURE0+1);
+    glBindTexture(GL_TEXTURE_2D, _heightMap);
+    glUniform1i(glGetUniformLocation(id, "heightmap"), 0);
+
+    glBindVertexArray(_vaoTerrain);
+    glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+}
+
 void Viewer::drawQuad(){
+    GLuint id = _shaders[1]->id();
 
-    GLuint id = _shaders[_currentshader]->id();
-
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0+0);
     glBindTexture(GL_TEXTURE_2D, _normalMap);
     glUniform1i(glGetUniformLocation(id, "normalMap"), 0);
 
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE0+1);
     glBindTexture(GL_TEXTURE_2D, _heightMap);
-    glUniform1i(glGetUniformLocation(id, "heightMap"), 1);
+    glUniform1i(glGetUniformLocation(id, "heightmap"), 1);
 
     glBindVertexArray(_vaoQuad);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -208,12 +216,11 @@ void Viewer::enableShaders(unsigned int shader) {
   // activate the current shader
   glUseProgram(id);
 
-
-  /*// send the model-view matrix
+  // send the model-view matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
 
   // send the projection matrix
-  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));*/
+  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
 }
 
 void Viewer::disableShaders() {
@@ -224,61 +231,66 @@ void Viewer::disableShaders() {
 void Viewer::paintGL() {
   
   switch (_currentshader) {
+    /*case 0 :
+      {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        enableShaders(_currentshader);
+
+        drawGrid(_currentshader);
+      }*/
     case 0 :
       {
         // clear the color and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // set viewport
-        glViewport(0, 0, width(), height());
-
-        enableShaders(_currentshader);
+        enableShaders(0);
 
         drawVAO();
         break;
       }
     case 1 :
       {
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+      // a partir de maintenant je dessine dans une texture
+        /*glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
-        enableShaders(_currentshader);
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
 
-        GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        enableShaders(0);
 
+        GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
         glDrawBuffers(2, buffers);
 
-        // clear the color and depth buffers
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // set viewport
-        glViewport(0, 0, width(), height());
-
-        enableShaders(_currentshader);
-
-        drawVAO();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         enableShaders(_currentshader);
 
-        drawQuad();
+        drawGrid(_currentshader);
+
+        //drawQuad();
+
+        /*glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);*/
         break;
       }
     case 2 :
       {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
         break;
       }
     case 3 :
       {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
         break;
       }
     case 4 :
       {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT);
         break;
       }
   }
@@ -290,8 +302,6 @@ void Viewer::paintGL() {
 void Viewer::resizeGL(int width, int height) {
   _cam->initialize(width, height, false);
   glViewport(0,0, width, height);
-
-
   initFBO();
   updateGL();
 }
@@ -377,6 +387,7 @@ void Viewer::initializeGL() {
   // init OpenGL settings
   glClearColor(0.0,0.0,0.0,1.0);
   glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glViewport(0,0,width(), height());
 
