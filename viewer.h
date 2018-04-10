@@ -47,6 +47,7 @@ class Viewer : public QGLWidget {
   void createFBO();
   void initFBO();
   void deleteFBO();
+  void drawQuad();
 
   void createShaders();
   void deleteShaders();
