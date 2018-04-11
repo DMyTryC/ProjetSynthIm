@@ -5,11 +5,9 @@
 
 out vec4 outBuffer;
 
-uniform sampler2D normalmap;
 uniform sampler2D heightmap;
 
-
-in vec2 texcoord;
+in vec2 texpos;
 
 float value(in vec4 c) {
 
@@ -20,12 +18,12 @@ float value(in vec4 c) {
 
 
 void main() {
-  	vec2 ps = 1./vec2(textureSize(heightmap,0));
+  	vec2 ps = 1./vec2(textureSize(heightmap, 0));
 
-	vec2 g = vec2(value(texture(heightmap,texcoord+vec2(ps.x,0.))) -
-			value(texture(heightmap,texcoord-vec2(ps.x,0.))),
-			value(texture(heightmap,texcoord+vec2(0.,ps.y))) -
-			value(texture(heightmap,texcoord-vec2(0.,ps.y))))/2.;
+	vec2 g = vec2(value(texture(heightmap,texpos+vec2(ps.x,0.))) -
+			value(texture(heightmap,texpos-vec2(ps.x,0.))),
+			value(texture(heightmap,texpos+vec2(0.,ps.y))) -
+			value(texture(heightmap,texpos-vec2(0.,ps.y))))/2.;
 
 	float scale = 100.;
 
@@ -35,6 +33,5 @@ void main() {
 
 	vec3 n = normalize(cross(n1,n2));
 
-	outBuffer = vec4(n, value(texture(heightmap, texcoord)));
-
+	outBuffer = vec4(n, texture(heightmap,texpos).x);
 }
