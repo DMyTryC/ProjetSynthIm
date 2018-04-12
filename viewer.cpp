@@ -15,18 +15,17 @@ Viewer::Viewer(const QGLFormat &format)
   _grid = new Grid(_GRID_SIZE, -1.0f, 1.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera(0.5,glm::vec3(0.0f, 0.0f, 0.0f));
+  _cam  = new Camera(1,glm::vec3(0.0f, 0.0f, 0.0f));
 
   _timer->setInterval(10);
   connect(_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
-
-  _currentshader = 1;
 }
 
 Viewer::~Viewer() {
   // delete everything 
   delete _timer;
   delete _cam;
+  delete _grid;
 
   deleteVAO();
   deleteShaders();
@@ -54,7 +53,6 @@ void Viewer::createShaders() {
 void Viewer::deleteShaders() {
     for (unsigned int i = 0; i < _shaders.size(); i++){
         delete _shaders[i];
-        _shaders[i] = NULL;
     }
 }
 
@@ -123,7 +121,7 @@ void Viewer::initFBO() {
   // create the texture for rendering the normal map values
   glBindTexture(GL_TEXTURE_2D, _normalMap);
   glGenerateMipmap(GL_TEXTURE_2D);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _GRID_SIZE, _GRID_SIZE, 0, GL_RGBA, GL_FLOAT, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width(), height(), 0, GL_RGBA, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -131,7 +129,7 @@ void Viewer::initFBO() {
 
   glBindTexture(GL_TEXTURE_2D, _heightMap);
   glGenerateMipmap(GL_TEXTURE_2D);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, _GRID_SIZE, _GRID_SIZE, 0, GL_RGBA, GL_FLOAT, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width(), height(), 0, GL_RGBA, GL_FLOAT, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -161,14 +159,6 @@ void Viewer::drawVAO() {
 
   GLuint id = _shaders[0]->id();
 
-  glActiveTexture(GL_TEXTURE0+0);
-  glBindTexture(GL_TEXTURE_2D, _normalMap);
-  glUniform1i(glGetUniformLocation(id, "normalmap"), 0);
-
-  glActiveTexture(GL_TEXTURE0+1);
-  glBindTexture(GL_TEXTURE_2D, _heightMap);
-  glUniform1i(glGetUniformLocation(id, "heightmap"), 1);
-
   // activate the VAO, draw the associated triangles and desactivate the VAO
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
@@ -180,29 +170,16 @@ void Viewer::drawGrid(unsigned int shader){
     GLuint id = _shaders[shader]->id();
 
     glActiveTexture(GL_TEXTURE0+0);
-    glBindTexture(GL_TEXTURE_2D, _normalMap);
-    glUniform1i(glGetUniformLocation(id, "normalmap"), 0);
-
-    glActiveTexture(GL_TEXTURE0+1);
     glBindTexture(GL_TEXTURE_2D, _heightMap);
-    glUniform1i(glGetUniformLocation(id, "heightmap"), 0);
+    glUniform1ui(glGetUniformLocation(id, "heightmap"), 0);
 
     glBindVertexArray(_vaoTerrain);
     glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 
+
 void Viewer::drawQuad(){
-    GLuint id = _shaders[1]->id();
-
-    glActiveTexture(GL_TEXTURE0+0);
-    glBindTexture(GL_TEXTURE_2D, _normalMap);
-    glUniform1i(glGetUniformLocation(id, "normalMap"), 0);
-
-    glActiveTexture(GL_TEXTURE0+1);
-    glBindTexture(GL_TEXTURE_2D, _heightMap);
-    glUniform1i(glGetUniformLocation(id, "heightmap"), 1);
-
     glBindVertexArray(_vaoQuad);
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindVertexArray(0);
@@ -251,31 +228,37 @@ void Viewer::paintGL() {
       }
     case 1 :
       {
+      glDisable(GL_DEPTH_TEST);
+      glDepthMask(GL_FALSE);
       // a partir de maintenant je dessine dans une texture
-        /*glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-
-        glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
+        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
         enableShaders(0);
 
-        GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffers(2, buffers);
+        //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
+        drawQuad();
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        enableShaders(_currentshader);
+        enableShaders(1);
 
-        drawGrid(_currentshader);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-        //drawQuad();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        /*glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);*/
+        drawQuad();
+
+        // shader that draws grid
+        // and drawgrid
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
         break;
       }
     case 2 :
@@ -389,7 +372,7 @@ void Viewer::initializeGL() {
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glViewport(0,0,width(), height());
+  glViewport(0,0, width(), height());
 
   // initialize camera
   _cam->initialize(width(), height(), true);

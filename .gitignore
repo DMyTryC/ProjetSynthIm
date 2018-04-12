@@ -1,5 +1,6 @@
+main.pro.user
 *user*
-*user
 projet
+lib/
 *.o
 Makefile

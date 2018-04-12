@@ -61,6 +61,7 @@ class Viewer : public QGLWidget {
 
   Camera *_cam; // the camera
   Grid *_grid;  // the grid
+  unsigned int _GRID_SIZE;
 
   std::vector<std::string> _vertexFilenames;   // all vertex filenames
   std::vector<std::string> _fragmentFilenames; // all fragment filenames
@@ -71,7 +72,6 @@ class Viewer : public QGLWidget {
   GLuint _vaoQuad;
   GLuint _terrain[2];
   GLuint _quad;
-  GLuint _GRID_SIZE;
 
   GLuint _fbo;
   GLuint _heightMap;
