@@ -33,5 +33,5 @@ void main() {
 
 	vec3 n = normalize(cross(n1,n2));
 
-	outBuffer = vec4(n, texture(heightmap,texpos).x);
+	outBuffer = vec4(n, value(texture(heightmap, texpos)));
 }

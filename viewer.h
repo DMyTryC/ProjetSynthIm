@@ -73,7 +73,6 @@ class Viewer : public QGLWidget {
   GLuint _terrain[2];
   GLuint _quad;
 
-
   GLuint _fbo;
   GLuint _heightMap;
   GLuint _normalMap;

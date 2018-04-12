@@ -53,7 +53,6 @@ void Viewer::createShaders() {
 void Viewer::deleteShaders() {
     for (unsigned int i = 0; i < _shaders.size(); i++){
         delete _shaders[i];
-        _shaders[i] = NULL;
     }
 }
 
@@ -157,6 +156,9 @@ void Viewer::deleteFBO() {
 }
 
 void Viewer::drawVAO() {
+
+  GLuint id = _shaders[0]->id();
+
   // activate the VAO, draw the associated triangles and desactivate the VAO
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
@@ -174,8 +176,8 @@ void Viewer::drawGrid(unsigned int shader){
     glBindVertexArray(_vaoTerrain);
     glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
-
 }
+
 
 void Viewer::drawQuad(){
     glBindVertexArray(_vaoQuad);
@@ -226,7 +228,6 @@ void Viewer::paintGL() {
       }
     case 1 :
       {
-
       glDisable(GL_DEPTH_TEST);
       glDepthMask(GL_FALSE);
       // a partir de maintenant je dessine dans une texture
