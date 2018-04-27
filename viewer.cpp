@@ -9,6 +9,7 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
+    _deplacement(0,0),
     _drawMode(false) {
 
   _grid = new Grid(10, -5.0f, 5.0f);
@@ -192,18 +193,24 @@ void Viewer::paintGL() {
       glViewport(0, 0, width(), height());
 
       enableShaders(_currentshader);
+      
+      glUseProgram(_shaders[_currentshader]->id());
+      glUniform2f(glGetUniformLocation(_shaders[_currentshader]->id(),"deplacement"),_deplacement.x,_deplacement.y);
 
       drawVAO();
+
+      drawQuad();
       break;
     case 1 :
       glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
       enableShaders(_currentshader);
-
+      
       GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 
       glDrawBuffers(2, buffers);
 
+    
       // clear the color and depth buffers
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -264,13 +271,30 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
 
+  if(ke->key()==Qt::Key_Z) {
+    if(!_drawMode) 
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    else 
+      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    
+    _drawMode = !_drawMode;
+  }  else if(ke->key()==Qt::Key_A){
+      _deplacement.x += 0.01 ;
+  }else if(ke->key()==Qt::Key_D){
+      _deplacement.x -= 0.01;
+  }else if(ke->key()==Qt::Key_W){
+      _deplacement.y += 0.01;
+  }else if(ke->key()==Qt::Key_S){
+      _deplacement.y -= 0.01;
+  }
+
   // key a: play/stop animation
-  if(ke->key()==Qt::Key_A) {
+  /*if(ke->key()==Qt::Key_A) {
     if(_timer->isActive())
       _timer->stop();
     else
       _timer->start();
-  }
+  }*/
 
   // key i: init camera
   if(ke->key()==Qt::Key_I) {
@@ -320,12 +344,11 @@ void Viewer::initializeGL() {
   // init OpenGL settings
   glClearColor(0.0,0.0,0.0,1.0);
   glEnable(GL_DEPTH_TEST);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glViewport(0,0,width(), height());
 
   // initialize camera
   _cam->initialize(width(), height(), true);
-
+  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   // create and initialize shaders and VAO 
   createShaders();
 

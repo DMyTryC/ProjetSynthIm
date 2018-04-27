@@ -1,7 +1,7 @@
 #version 330
 
 // The normal map shader
-
+uniform vec2 deplacement;
 out vec4 outBuffer;
 uniform sampler2D heightMap;
 uniform sampler2D normalMap;
