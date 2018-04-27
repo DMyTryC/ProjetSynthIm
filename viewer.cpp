@@ -194,6 +194,7 @@ void Viewer::paintGL() {
 
       enableShaders(_currentshader);
       
+      //Pour faire mouvement
       glUseProgram(_shaders[_currentshader]->id());
       glUniform2f(glGetUniformLocation(_shaders[_currentshader]->id(),"deplacement"),_deplacement.x,_deplacement.y);
 
@@ -205,7 +206,7 @@ void Viewer::paintGL() {
       glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
       enableShaders(_currentshader);
-      
+
       GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 
       glDrawBuffers(2, buffers);
@@ -271,6 +272,7 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
 
+  //mouvement
   if(ke->key()==Qt::Key_Z) {
     if(!_drawMode) 
       glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
