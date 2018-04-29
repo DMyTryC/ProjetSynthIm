@@ -15,13 +15,6 @@ Step 3. Fetch and merge the changes to the current branch
 	* git remote -v : list the remote repositories
 	* git fetch "nameRemoteRepo" : fetches the files made to the remote repository "name"
 	* git merge "nameRemoteRepo"/"nameBranchRemote" "nameBranchLocal" : Merges the files on the "nameRemoteRepo"/"nameBranchRemote" with the "nameBranchLocal" branchs
-		
-Step 4. Execute maven and clean generated files from pushing
-* Commands to execute :
-	* mvn install : lets you execute the test life cycle which will test your files for errors
-	* bash scriptCleanUp.sh or ./scriptCleanUp.sh : clears the local repository cache from the files that were generated 
-	Note : This will not delete them from your local repository, it will just enforce the .gitignore rules
-	* Explanation : The files that are written into the .gitignore will still be commited if they are present in the cache of the git repository
 				
 Step 5. Push the changes to the remote branch
 * Recommit if needed
