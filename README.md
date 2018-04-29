@@ -16,7 +16,7 @@ Step 3. Fetch and merge the changes to the current branch
 	* git fetch "nameRemoteRepo" : fetches the files made to the remote repository "name"
 	* git merge "nameRemoteRepo"/"nameBranchRemote" "nameBranchLocal" : Merges the files on the "nameRemoteRepo"/"nameBranchRemote" with the "nameBranchLocal" branchs
 				
-Step 5. Push the changes to the remote branch
+Step 4. Push the changes to the remote branch
 * Recommit if needed
 * Push the changes to the remote repository : 
 	* git push "nameRemoteRepo" "nameBranchLocal" : This creates a remote repository branch with the same name as the local branch (if it doesn't exist), if it does exist, will push to the remote branch otherwise
