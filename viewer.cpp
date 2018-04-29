@@ -157,8 +157,6 @@ void Viewer::deleteFBO() {
 
 void Viewer::drawVAO() {
 
-  GLuint id = _shaders[0]->id();
-
   // activate the VAO, draw the associated triangles and desactivate the VAO
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
@@ -172,6 +170,10 @@ void Viewer::drawGrid(unsigned int shader){
     glActiveTexture(GL_TEXTURE0+0);
     glBindTexture(GL_TEXTURE_2D, _heightMap);
     glUniform1ui(glGetUniformLocation(id, "heightmap"), 0);
+
+    glActiveTexture(GL_TEXTURE0+1);
+    glBindTexture(GL_TEXTURE_2D, _normalMap);
+    glUniform1ui(glGetUniformLocation(id, "normalmap"), 0);
 
     glBindVertexArray(_vaoTerrain);
     glDrawElements(GL_TRIANGLES, 3*_grid->nbFaces(), GL_UNSIGNED_INT, 0);
@@ -208,14 +210,6 @@ void Viewer::disableShaders() {
 void Viewer::paintGL() {
   
   switch (_currentshader) {
-    /*case 0 :
-      {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        enableShaders(_currentshader);
-
-        drawGrid(_currentshader);
-      }*/
     case 0 :
       {
         // clear the color and depth buffers
@@ -246,16 +240,14 @@ void Viewer::paintGL() {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // shader that draws grid
         enableShaders(1);
 
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawQuad();
-
-        // shader that draws grid
-        // and drawgrid
+        drawGrid(1);
 
         glEnable(GL_DEPTH_TEST);
         glDepthMask(GL_TRUE);
@@ -263,7 +255,35 @@ void Viewer::paintGL() {
       }
     case 2 :
       {
-        glClear(GL_COLOR_BUFFER_BIT);
+      glDisable(GL_DEPTH_TEST);
+      glDepthMask(GL_FALSE);
+      // a partir de maintenant je dessine dans une texture
+        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+
+        enableShaders(0);
+
+        //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffer(GL_COLOR_ATTACHMENT1);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        drawQuad();
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // shader that draws grid
+        enableShaders(2);
+
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        drawGrid(2);
+
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
         break;
       }
     case 3 :
