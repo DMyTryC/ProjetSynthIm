@@ -8,10 +8,11 @@ out vec2 texpos;
 
 uniform mat4 mdvMat;
 uniform mat4 projMat;
+uniform sampler2D heightmap;
 
 void main() {
-
-	gl_Position = projMat*mdvMat*vec4(position, 1);
+	vec4 height = texture(heightmap,position.xy*0.5+0.5);
+	gl_Position = projMat*mdvMat*vec4(position.xy, height.x, 1);
 
 	texpos = position.xy*0.5+0.5;
 }
