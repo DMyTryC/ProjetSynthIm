@@ -9,8 +9,6 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
-    _deplacement(0,0),
-    _light(glm::vec3(0,0,1)),
     _drawMode(false) {
 
   _GRID_SIZE = 1024;
@@ -18,6 +16,8 @@ Viewer::Viewer(const QGLFormat &format)
   
   // create a camera (automatically modify model/view matrices according to user interactions)
   _cam  = new Camera(1,glm::vec3(0.0f, 0.0f, 0.0f));
+
+  _deplacement = glm::vec2(0.0f, 0.0f);
 
   _timer->setInterval(10);
   connect(_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
@@ -41,9 +41,6 @@ void Viewer::createShaders() {
 
   _vertexFilenames.push_back("shaders/second.vert");
   _fragmentFilenames.push_back("shaders/second.frag");
-
-  _vertexFilenames.push_back("shaders/third.vert");
-  _fragmentFilenames.push_back("shaders/third.frag");
 
   /*_vertexFilenames.push_back("shaders/fourth.vert");
   _fragmentFilenames.push_back("shaders/fourth.frag");
@@ -117,7 +114,6 @@ void Viewer::createFBO(){
     glGenFramebuffers(1, &_fbo);
     glGenTextures(1, &_heightMap);
     glGenTextures(1, &_normalMap);
-    // chercher une im, mettre dans tex
 }
 
 void Viewer::initFBO() {
@@ -203,6 +199,8 @@ void Viewer::enableShaders(unsigned int shader) {
 
   // send the projection matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
+
+  glUniform2f(glGetUniformLocation(id,"deplacement"),_deplacement.x,_deplacement.y);
 }
 
 void Viewer::disableShaders() {
@@ -211,99 +209,43 @@ void Viewer::disableShaders() {
 }
 
 void Viewer::paintGL() {
-  
-  switch (_currentshader) {
-    case 0 :
-      {
-        // clear the color and depth buffers
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        enableShaders(0);
-        glUseProgram(_shaders[_currentshader]->id());
-        glUniform2f(glGetUniformLocation(_shaders[_currentshader]->id(),"deplacement"),_deplacement.x,_deplacement.y);
-        drawVAO();
-        break;
-      }
-    case 1 :
-      {
-      glDisable(GL_DEPTH_TEST);
-      glDepthMask(GL_FALSE);
-      // a partir de maintenant je dessine dans une texture
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+    enableShaders(0);
 
-        enableShaders(0); 
-        //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    drawVAO();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    // a partir de maintenant je dessine dans une texture
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
-        drawQuad();
+    enableShaders(0);
+    //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
+    drawQuad();
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // shader that draws grid
-        enableShaders(1);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
 
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // shader that draws grid
+    enableShaders(1);
 
-        drawGrid(1);
-        
-        break;
-      }
-    case 2 :
-      {
-      glDisable(GL_DEPTH_TEST);
-      glDepthMask(GL_FALSE);
-      // a partir de maintenant je dessine dans une texture
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-        enableShaders(0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    drawGrid(1);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        drawQuad();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // shader that draws grid
-        enableShaders(1);
-
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        drawGrid(2);
-        break;
-      }
-    case 3 :
-      {
-        glClear(GL_COLOR_BUFFER_BIT);
-        break;
-      }
-    case 4 :
-      {
-        glClear(GL_COLOR_BUFFER_BIT);
-        break;
-      }
-  }
-
-  // tell the GPU to stop using this shader
-  disableShaders();
+    // tell the GPU to stop using this shader
+    disableShaders();
 }
 
 void Viewer::resizeGL(int width, int height) {
@@ -339,14 +281,7 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
   // key a: play/stop animation
-  if(ke->key()==Qt::Key_Z) {
-    if(!_drawMode) 
-      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    else 
-      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-    
-    _drawMode = !_drawMode;
-  }  else if(ke->key()==Qt::Key_A){
+  if(ke->key()==Qt::Key_A){
       _deplacement.x += 0.1 ;
   }else if(ke->key()==Qt::Key_D){
       _deplacement.x -= 0.1;
@@ -380,11 +315,6 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     for(unsigned int i=0; i<_vertexFilenames.size(); ++i) {
       _shaders[i]->reload(_vertexFilenames[i].c_str(), _fragmentFilenames[i].c_str());
     }
-  }
-
-  // space: next shader
-  if(ke->key()==Qt::Key_Space) {
-    _currentshader = (_currentshader+1)%_shaders.size();
   }
 
   updateGL();

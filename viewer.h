@@ -59,7 +59,6 @@ class Viewer : public QGLWidget {
   bool           _drawMode; // press w for wire or fill drawing mode
   unsigned int   _currentshader; // current shader index
   glm::vec2 _deplacement;
-  glm::vec3 _light;
   Camera *_cam; // the camera
   Grid *_grid;  // the grid
   unsigned int _GRID_SIZE;
