@@ -9,6 +9,8 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
+    _deplacement(0,0),
+    _light(glm::vec3(0,0,1)),
     _drawMode(false) {
 
   _GRID_SIZE = 1024;
@@ -217,7 +219,8 @@ void Viewer::paintGL() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         enableShaders(0);
-
+        glUseProgram(_shaders[_currentshader]->id());
+        glUniform2f(glGetUniformLocation(_shaders[_currentshader]->id(),"deplacement"),_deplacement.x,_deplacement.y);
         drawVAO();
         break;
       }
@@ -228,8 +231,7 @@ void Viewer::paintGL() {
       // a partir de maintenant je dessine dans une texture
         glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
-        enableShaders(0);
-
+        enableShaders(0); 
         //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
         glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
@@ -252,6 +254,7 @@ void Viewer::paintGL() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         drawGrid(1);
+        
         break;
       }
     case 2 :
@@ -284,7 +287,7 @@ void Viewer::paintGL() {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawGrid(1);
+        drawGrid(2);
         break;
       }
     case 3 :
@@ -336,11 +339,21 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
   // key a: play/stop animation
-  if(ke->key()==Qt::Key_A) {
-    if(_timer->isActive())
-      _timer->stop();
-    else
-      _timer->start();
+  if(ke->key()==Qt::Key_Z) {
+    if(!_drawMode) 
+      glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+    else 
+      glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+    
+    _drawMode = !_drawMode;
+  }  else if(ke->key()==Qt::Key_A){
+      _deplacement.x += 0.1 ;
+  }else if(ke->key()==Qt::Key_D){
+      _deplacement.x -= 0.1;
+  }else if(ke->key()==Qt::Key_W){
+      _deplacement.y += 0.1;
+  }else if(ke->key()==Qt::Key_S){
+      _deplacement.y -= 0.1;
   }
 
   // key i: init camera
