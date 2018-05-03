@@ -17,6 +17,8 @@ Viewer::Viewer(const QGLFormat &format)
   // create a camera (automatically modify model/view matrices according to user interactions)
   _cam  = new Camera(1,glm::vec3(0.0f, 0.0f, 0.0f));
 
+  _deplacement = glm::vec2(0.0f, 0.0f);
+
   _timer->setInterval(10);
   connect(_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
 }
@@ -112,7 +114,6 @@ void Viewer::createFBO(){
     glGenFramebuffers(1, &_fbo);
     glGenTextures(1, &_heightMap);
     glGenTextures(1, &_normalMap);
-    // chercher une im, mettre dans tex
 }
 
 void Viewer::initFBO() {
@@ -198,6 +199,8 @@ void Viewer::enableShaders(unsigned int shader) {
 
   // send the projection matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
+
+  glUniform2f(glGetUniformLocation(id,"deplacement"),_deplacement.x,_deplacement.y);
 }
 
 void Viewer::disableShaders() {
@@ -206,65 +209,43 @@ void Viewer::disableShaders() {
 }
 
 void Viewer::paintGL() {
-  
-  switch (_currentshader) {
-    case 0 :
-      {
-        // clear the color and depth buffers
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        enableShaders(0);
+    enableShaders(0);
 
-        drawVAO();
-        break;
-      }
-    case 1 :
-      {
-      glDisable(GL_DEPTH_TEST);
-      glDepthMask(GL_FALSE);
-      // a partir de maintenant je dessine dans une texture
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+    drawVAO();
 
-        enableShaders(0);
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    // a partir de maintenant je dessine dans une texture
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 
-        //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffer(GL_COLOR_ATTACHMENT1);
+    enableShaders(0);
+    //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+    glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawQuad();
+    drawQuad();
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // shader that draws grid
-        enableShaders(1);
+    // shader that draws grid
+    enableShaders(1);
 
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        drawGrid(1);
-        break;
-      }
-    case 2 :
-      {
-        glClear(GL_COLOR_BUFFER_BIT);
-        break;
-      }
-    case 3 :
-      {
-        glClear(GL_COLOR_BUFFER_BIT);
-        break;
-      }
-  }
+    drawGrid(1);
 
-  // tell the GPU to stop using this shader
-  disableShaders();
+    // tell the GPU to stop using this shader
+    disableShaders();
 }
 
 void Viewer::resizeGL(int width, int height) {
@@ -300,11 +281,14 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
   // key a: play/stop animation
-  if(ke->key()==Qt::Key_A) {
-    if(_timer->isActive())
-      _timer->stop();
-    else
-      _timer->start();
+  if(ke->key()==Qt::Key_A){
+      _deplacement.x += 0.1 ;
+  }else if(ke->key()==Qt::Key_D){
+      _deplacement.x -= 0.1;
+  }else if(ke->key()==Qt::Key_W){
+      _deplacement.y += 0.1;
+  }else if(ke->key()==Qt::Key_S){
+      _deplacement.y -= 0.1;
   }
 
   // key i: init camera
@@ -331,11 +315,6 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     for(unsigned int i=0; i<_vertexFilenames.size(); ++i) {
       _shaders[i]->reload(_vertexFilenames[i].c_str(), _fragmentFilenames[i].c_str());
     }
-  }
-
-  // space: next shader
-  if(ke->key()==Qt::Key_Space) {
-    _currentshader = (_currentshader+1)%_shaders.size();
   }
 
   updateGL();

@@ -58,7 +58,7 @@ class Viewer : public QGLWidget {
   QTimer        *_timer;    // timer that controls the animation
   bool           _drawMode; // press w for wire or fill drawing mode
   unsigned int   _currentshader; // current shader index
-
+  glm::vec2 _deplacement;
   Camera *_cam; // the camera
   Grid *_grid;  // the grid
   unsigned int _GRID_SIZE;
