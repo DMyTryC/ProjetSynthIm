@@ -44,8 +44,8 @@ void Viewer::createShaders() {
 
   _vertexFilenames.push_back("shaders/third.vert");
   _fragmentFilenames.push_back("shaders/third.frag");
-  /*s
-  _vertexFilenames.push_back("shaders/fourth.vert");
+
+  /*_vertexFilenames.push_back("shaders/fourth.vert");
   _fragmentFilenames.push_back("shaders/fourth.frag");
 
   _vertexFilenames.push_back("shaders/fifth.vert");
@@ -117,6 +117,7 @@ void Viewer::createFBO(){
     glGenFramebuffers(1, &_fbo);
     glGenTextures(1, &_heightMap);
     glGenTextures(1, &_normalMap);
+    // chercher une im, mettre dans tex
 }
 
 void Viewer::initFBO() {
@@ -240,6 +241,9 @@ void Viewer::paintGL() {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // shader that draws grid
@@ -250,9 +254,7 @@ void Viewer::paintGL() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         drawGrid(1);
-
-        glEnable(GL_DEPTH_TEST);
-
+        
         break;
       }
     case 2 :
@@ -273,19 +275,19 @@ void Viewer::paintGL() {
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        glEnable(GL_DEPTH_TEST);
+        glDepthMask(GL_TRUE);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // shader that draws grid
-        enableShaders(2);
+        enableShaders(1);
 
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         drawGrid(2);
-  
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
         break;
       }
     case 3 :
