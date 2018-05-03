@@ -17,20 +17,14 @@ float value(in vec4 c) {
 
 
 void main() {
-  	vec2 ps = 1./vec2(textureSize(heightmap, 0));
 
-	vec2 g = vec2(value(texture(heightmap,texpos+vec2(ps.x,0.))) -
-			value(texture(heightmap,texpos-vec2(ps.x,0.))),
-			value(texture(heightmap,texpos+vec2(0.,ps.y))) -
-			value(texture(heightmap,texpos-vec2(0.,ps.y))))/2.;
-
-	float scale = 100.;
-
-	vec3 n1 = vec3(1.,0.,g.x*scale);
-
-	vec3 n2 = vec3(0.,1.,-g.y*scale);
-
-	vec3 n = normalize(cross(n1,n2));
-
-	outBuffer = vec4(n, value(texture(heightmap, texpos)));
+	vec4 height = 1.0 - texture(heightmap,texpos.xy);
+	
+	if (height.z > 0.7) {
+		outBuffer = vec4(0.9*height.xyz, 0);
+	} else if (height.z <= 0.7 && height.z > 0.3) {
+		outBuffer = vec4(0.4*height.xyz, 0);
+	} else if (height.z <= 0.3 && height.z > 0.0) {
+		outBuffer = vec4(0, 0.6*height.y, 0, 0);
+	}
 }

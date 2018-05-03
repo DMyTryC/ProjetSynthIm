@@ -40,9 +40,6 @@ void Viewer::createShaders() {
   _vertexFilenames.push_back("shaders/second.vert");
   _fragmentFilenames.push_back("shaders/second.frag");
 
-  _vertexFilenames.push_back("shaders/third.vert");
-  _fragmentFilenames.push_back("shaders/third.frag");
-
   /*_vertexFilenames.push_back("shaders/fourth.vert");
   _fragmentFilenames.push_back("shaders/fourth.frag");
 
@@ -256,43 +253,10 @@ void Viewer::paintGL() {
       }
     case 2 :
       {
-      glDisable(GL_DEPTH_TEST);
-      glDepthMask(GL_FALSE);
-      // a partir de maintenant je dessine dans une texture
-        glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
-
-        enableShaders(0);
-
-        //GLenum buffers [] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-        glDrawBuffer(GL_COLOR_ATTACHMENT1);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        drawQuad();
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glEnable(GL_DEPTH_TEST);
-        glDepthMask(GL_TRUE);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // shader that draws grid
-        enableShaders(1);
-
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        drawGrid(1);
-        break;
-      }
-    case 3 :
-      {
         glClear(GL_COLOR_BUFFER_BIT);
         break;
       }
-    case 4 :
+    case 3 :
       {
         glClear(GL_COLOR_BUFFER_BIT);
         break;
