@@ -10,12 +10,15 @@ Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
     _drawMode(false) {
-
   _GRID_SIZE = 1024;
   _grid = new Grid(_GRID_SIZE, -1.0f, 1.0f);
   
   // create a camera (automatically modify model/view matrices according to user interactions)
   _cam  = new Camera(1,glm::vec3(0.0f, 0.0f, 0.0f));
+  
+  _FOG_COLOR = glm::vec4(0.5f,0.5f,0.5f,1.0f);
+  _deplacement = glm::vec2(0.0f, 0.0f);
+
 
   _deplacement = glm::vec2(0.0f, 0.0f);
 
@@ -42,9 +45,9 @@ void Viewer::createShaders() {
   _vertexFilenames.push_back("shaders/second.vert");
   _fragmentFilenames.push_back("shaders/second.frag");
 
-  /*_vertexFilenames.push_back("shaders/fourth.vert");
+  _vertexFilenames.push_back("shaders/fourth.vert");
   _fragmentFilenames.push_back("shaders/fourth.frag");
-
+  /*
   _vertexFilenames.push_back("shaders/fifth.vert");
   _fragmentFilenames.push_back("shaders/fifth.frag");*/
 }
@@ -64,12 +67,13 @@ void Viewer::createVAO() {
   //GLuint _terrain[2];
   //GLuint _quad;
 
-  glGenBuffers(2, _terrain);
-  glGenVertexArrays(1, &_vaoTerrain);
-  // create VAO
-  glGenBuffers(1, &_quad);
-  glGenVertexArrays(1, &_vaoQuad);
+  glGenBuffers(2, _terrain);//tao 2 VBO
 
+  glGenVertexArrays(1, &_vaoTerrain);//tao 1 VAO id vaoterrain
+  // create VAO
+  glGenBuffers(1, &_quad);// tao 1 VBO quad
+  glGenVertexArrays(1, &_vaoQuad);// tao 1 VAO vaoQuad
+  
   // create the VAO associated with the screen quad
   // 2 triangles that cover the viewPort
   const GLfloat quadData[] = {
@@ -83,14 +87,15 @@ void Viewer::createVAO() {
 
   // create the VBO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);
-
   glBindBuffer(GL_ARRAY_BUFFER, _terrain[0]); // vertices
+  // dua du lieu vao VBO 
   glBufferData(GL_ARRAY_BUFFER, _grid->nbVertices()*3*sizeof(float), _grid->vertices(), GL_STATIC_DRAW);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
   glEnableVertexAttribArray(0);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _terrain[1]); // faces
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, _grid->nbFaces()*3*sizeof(unsigned int), _grid->faces(), GL_STATIC_DRAW);
+
 
   // bind vao and send vertices
   glBindVertexArray(_vaoQuad);
@@ -190,7 +195,9 @@ void Viewer::enableShaders(unsigned int shader) {
 
   // current shader ID
   GLuint id = _shaders[shader]->id();
-
+  glm::mat4 p = _cam->projMatrix();
+  glm::mat4 mv = _cam->mdvMatrix();
+  glm::mat4 mvp = p*mv;
   // activate the current shader
   glUseProgram(id);
 
@@ -200,6 +207,12 @@ void Viewer::enableShaders(unsigned int shader) {
   // send the projection matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
 
+  // send the tranformation matrix
+  glUniformMatrix4fv(glGetUniformLocation(id,"mvp"),1,GL_FALSE,&(mvp[0][0]));
+  //send the fogcolor
+  glUniform3fv(glGetUniformLocation(id,"FogColor"),1,&(_FOG_COLOR[0]));
+
+  //mouvement
   glUniform2f(glGetUniformLocation(id,"deplacement"),_deplacement.x,_deplacement.y);
 }
 
@@ -210,10 +223,6 @@ void Viewer::disableShaders() {
 
 void Viewer::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    enableShaders(0);
-
-    drawVAO();
 
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
@@ -243,6 +252,26 @@ void Viewer::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     drawGrid(1);
+
+    //enable shader post process
+    /*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    enableShaders(2);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    drawGrid(2);*/
+    
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    //glClearColor(0.5f,0.5f,0.5f,1);
+    /*
+    GLfloat fogColor[] = {0.5f,0.5f,0.5f,1.0f};
+    glEnable(GL_FOG);
+    glFogfv(GL_FOG_COLOR, fogColor);
+    glFogi( GL_FOG_MODE,GL_EXP2);
+    glFogf(GL_FOG_START,10.0f);
+    glFogf(GL_FOG_END,20.0f);
+    glFogf(GL_FOG_DENSITY,0.3f);
+    glFogf(GL_FOG_HINT,GL_NICEST);
+    */
 
     // tell the GPU to stop using this shader
     disableShaders();
@@ -291,6 +320,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
       _deplacement.y -= 0.1;
   }
 
+
   // key i: init camera
   if(ke->key()==Qt::Key_I) {
     _cam->initialize(width(), height(), true);
@@ -337,7 +367,7 @@ void Viewer::initializeGL() {
   glDepthMask(GL_TRUE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glViewport(0,0, width(), height());
-
+  
   // initialize camera
   _cam->initialize(width(), height(), true);
 
@@ -357,4 +387,3 @@ void Viewer::initializeGL() {
   // starts the timer 
   _timer->start();
 }
-
