@@ -2,7 +2,8 @@
 
 //uniform vec4 FogColor;
 
-in vec3 mVertex;
+in vec4 mVertex;
+in vec4 mColor;
 in vec3 eyeView;
 
 float getFogFactor(float d)
@@ -18,9 +19,10 @@ float getFogFactor(float d)
 
 void main(void)
 {
-	vec4 FogColor = vec4(0.5f,0.5f,0.5f,1.0f);
-    vec3 V = mVertex;
-    float d = distance(eyeView, V);
+    vec4 FogColor = vec4(0.5f,0.5f,0.5f,1.0f);
+    vec4 eye = vec4(eyeView,1.0);
+    float d = distance(eye, mVertex);
+    d = normalize(d);
     float alpha = getFogFactor(d);
-    gl_FragColor = mix(FogColor,FogColor, alpha);
+    gl_FragColor = mix(mColor,FogColor, alpha);
 }
