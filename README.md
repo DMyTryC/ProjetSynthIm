@@ -1,5 +1,11 @@
 # ProjetSynthIm
 
+## Compile and execute
+qmake && make
+Then execute the "projet" file
+
+## UTILS
+
 How to push to a repository :
 -----------------------------
 Step 1. Make sure you are working on a branch 
