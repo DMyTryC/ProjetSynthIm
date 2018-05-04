@@ -237,7 +237,11 @@ void Viewer::paintGL() {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
     drawQuad();
+    
+      // clear the color and depth buffers
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -324,6 +328,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   }
 
 
+
   // key i: init camera
   if(ke->key()==Qt::Key_I) {
     _cam->initialize(width(), height(), true);
@@ -371,10 +376,11 @@ void Viewer::initializeGL() {
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glViewport(0,0, width(), height());
 
+
   
   // initialize camera
   _cam->initialize(width(), height(), true);
-
+  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   // create and initialize shaders and VAO 
   createShaders();
 
