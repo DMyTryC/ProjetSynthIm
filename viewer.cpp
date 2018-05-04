@@ -20,6 +20,8 @@ Viewer::Viewer(const QGLFormat &format)
   _deplacement = glm::vec2(0.0f, 0.0f);
 
 
+  _deplacement = glm::vec2(0.0f, 0.0f);
+
   _timer->setInterval(10);
   connect(_timer, SIGNAL(timeout()), this, SLOT(updateGL()));
 }
@@ -222,10 +224,6 @@ void Viewer::disableShaders() {
 void Viewer::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    enableShaders(0);
-
-    drawVAO();
-
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);
     // a partir de maintenant je dessine dans une texture
@@ -244,7 +242,6 @@ void Viewer::paintGL() {
     glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
 
-    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // shader that draws grid
