@@ -257,10 +257,10 @@ void Viewer::paintGL() {
     drawGrid(1);
 
     //enable shader post process
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //enableShaders(2);
-    //glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    //drawGrid(2);
+    /*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    enableShaders(2);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    drawGrid(2);*/
     
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -370,7 +370,6 @@ void Viewer::initializeGL() {
   glDepthMask(GL_TRUE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glViewport(0,0, width(), height());
-
   
   // initialize camera
   _cam->initialize(width(), height(), true);
