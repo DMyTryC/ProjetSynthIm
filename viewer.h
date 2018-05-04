@@ -48,6 +48,7 @@ class Viewer : public QGLWidget {
   void initFBO();
   void deleteFBO();
   void drawQuad();
+  void drawGrid(unsigned int shader);
 
   void createShaders();
   void deleteShaders();
@@ -57,15 +58,16 @@ class Viewer : public QGLWidget {
   QTimer        *_timer;    // timer that controls the animation
   bool           _drawMode; // press w for wire or fill drawing mode
   unsigned int   _currentshader; // current shader index
-
+  glm::vec2 _deplacement;
+  glm::vec4 _FOG_COLOR;
   Camera *_cam; // the camera
   Grid *_grid;  // the grid
+  unsigned int _GRID_SIZE;
 
   std::vector<std::string> _vertexFilenames;   // all vertex filenames
   std::vector<std::string> _fragmentFilenames; // all fragment filenames
 
   std::vector<Shader *> _shaders; // all the shaders
-  glm::vec2 _deplacement;
   
   GLuint _vaoTerrain;
   GLuint _vaoQuad;
@@ -78,3 +80,4 @@ class Viewer : public QGLWidget {
 };
 
 #endif // VIEWER_H
+
