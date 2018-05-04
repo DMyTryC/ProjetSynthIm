@@ -47,9 +47,6 @@ void Viewer::createShaders() {
 
   _vertexFilenames.push_back("shaders/fourth.vert");
   _fragmentFilenames.push_back("shaders/fourth.frag");
-  /*
-  _vertexFilenames.push_back("shaders/fifth.vert");
-  _fragmentFilenames.push_back("shaders/fifth.frag");*/
 }
 
 void Viewer::deleteShaders() {
@@ -120,7 +117,7 @@ void Viewer::createFBO(){
     glGenTextures(1, &_heightMap);
     glGenTextures(1, &_normalMap);
 }
-
+\
 void Viewer::initFBO() {
   // create the texture for rendering the normal map values
   glBindTexture(GL_TEXTURE_2D, _normalMap);
@@ -195,9 +192,7 @@ void Viewer::enableShaders(unsigned int shader) {
 
   // current shader ID
   GLuint id = _shaders[shader]->id();
-  glm::mat4 p = _cam->projMatrix();
-  glm::mat4 mv = _cam->mdvMatrix();
-  glm::mat4 mvp = p*mv;
+
   // activate the current shader
   glUseProgram(id);
 
@@ -207,8 +202,6 @@ void Viewer::enableShaders(unsigned int shader) {
   // send the projection matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
 
-  // send the tranformation matrix
-  glUniformMatrix4fv(glGetUniformLocation(id,"mvp"),1,GL_FALSE,&(mvp[0][0]));
   //send the fogcolor
   glUniform3fv(glGetUniformLocation(id,"FogColor"),1,&(_FOG_COLOR[0]));
 
