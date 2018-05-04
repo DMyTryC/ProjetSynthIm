@@ -68,7 +68,7 @@ class Viewer : public QGLWidget {
   std::vector<std::string> _fragmentFilenames; // all fragment filenames
 
   std::vector<Shader *> _shaders; // all the shaders
-  
+
   GLuint _vaoTerrain;
   GLuint _vaoQuad;
   GLuint _terrain[2];
